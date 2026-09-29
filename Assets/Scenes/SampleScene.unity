@@ -1584,7 +1584,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 619, y: 359}
-  m_SizeDelta: {x: 500, y: 250}
+  m_SizeDelta: {x: 550, y: 250}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &564033474
 MonoBehaviour:
@@ -1767,6 +1767,7 @@ MonoBehaviour:
   - {fileID: 1069783785}
   - {fileID: 1475074750}
   debugText: {fileID: 564033474}
+  showDebugText: 1
   showVisionGizmos: 1
   arcSegments: 30
   obstacleMask:

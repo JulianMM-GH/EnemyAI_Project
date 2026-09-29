@@ -18,7 +18,9 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI debugText;
 
     [Header("In-Game Debug Settings")]
-    [SerializeField] private bool showVisionGizmos = true;
+    [SerializeField] private bool showDebugText = false;
+
+    [SerializeField] private bool showVisionGizmos = false;
 
     public int arcSegments = 30;
 
@@ -243,8 +245,17 @@ public class EnemyController : MonoBehaviour
         // If there isn't a text box to put the info into, return
         if (debugText == null) return;
 
-        // Instantiates a clean, efficient text string worker
-        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        if (!showDebugText)
+        {
+            debugText.gameObject.SetActive(false);
+        }
+        else
+        {
+            debugText.gameObject.SetActive(true);
+        }
+
+            // Instantiates a clean, efficient text string worker
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
 
         sb.AppendLine($"<b>[ENEMY DEBUG]</b>");
         sb.AppendLine($"State: <color=yellow>{state}</color>");
