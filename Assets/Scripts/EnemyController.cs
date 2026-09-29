@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
+using TMPro;
 
 public enum EnemyState
 {
@@ -14,12 +15,28 @@ public class EnemyController : MonoBehaviour
     [Header("References")]
     [SerializeField] private Transform player;
     [SerializeField] private Transform[] patrolPoints;
+    [SerializeField] private TextMeshProUGUI debugText;
+
+    [Header("In-Game Debug Settings")]
+    [SerializeField] private bool showVisionGizmos = true;
+
+    public int arcSegments = 30;
+
+    public LayerMask obstacleMask;
+
+    private MeshFilter visionMeshFilter;
+    private Mesh visionMesh;
+
+    public Material visionMaterial;
+    public Material visionFollowingMaterial;
+
+    [Header("Enemy Vision")]
+    [SerializeField] private float detectionRange = 10f;
+    [Range(0, 360)] public float viewAngle = 90f;
 
     [Header("Settings")]
     [SerializeField] private float patrolWaitTime = 2f;
     [SerializeField] private float stopAtDistance = 0.5f;
-    [SerializeField] private float detectionRange = 5f;
-    [SerializeField] private float viewAngle = 90f;
     [SerializeField] private float losePlayerTime = 3f;
     [SerializeField] private float attackRange = 1.2f;
 
@@ -40,6 +57,21 @@ public class EnemyController : MonoBehaviour
     private void Start()
     {
         GoToNextPatrolPoint();
+
+        visionMeshFilter = GetComponent<MeshFilter>();
+        visionMesh = new Mesh();
+        visionMesh.name = "Vision Cone Mesh";
+        visionMeshFilter.mesh = visionMesh;
+
+        MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+        if (visionMaterial != null)
+        {
+            meshRenderer.material = visionMaterial;
+        }
+        else
+        {
+            Debug.LogWarning("Please assign a Vision Material");
+        }
     }
 
     private void Update()
@@ -92,6 +124,10 @@ public class EnemyController : MonoBehaviour
 
         }
         UpdateAnimations();
+
+        UpdateDebugUI(distanceToPlayer);
+
+        UpdateVisionMesh();
     }
 
     private void FollowPlayer()
@@ -200,5 +236,128 @@ public class EnemyController : MonoBehaviour
     {
         var isWalking = agent.velocity.sqrMagnitude > 0.01f;
         animator.SetBool("isWalking", isWalking);
+    }
+
+    private void UpdateDebugUI(float distanceToPlayer)
+    {
+        // If there isn't a text box to put the info into, return
+        if (debugText == null) return;
+
+        // Instantiates a clean, efficient text string worker
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+        sb.AppendLine($"<b>[ENEMY DEBUG]</b>");
+        sb.AppendLine($"State: <color=yellow>{state}</color>");
+        sb.AppendLine($"Distance to Player: {distanceToPlayer:F2}m");
+        sb.AppendLine($"Can See Player: {(CanSeePlayer() ? "<color=green>YES</color>" : "<color=red>NO</color>")}");
+
+        // Displays what point the AI is currently moving towards and if it is currently waiting at a point
+        if (state == EnemyState.Patrolling)
+        {
+            sb.AppendLine($"Patrol Index: {currentPatrolIndex}");
+            sb.AppendLine($"Is Waiting at Point: {isWaiting}");
+        }
+
+        // Displays when the AI is chasing the player
+        // When line of sight with the player is lost, the timer that counts until the AI reverts to patrolling can now be observed 
+        else if (state == EnemyState.Following)
+        {
+            sb.AppendLine($"Time Since Lost Player: {timeSinceLostPlayer:F1}s / {losePlayerTime}s");
+        }
+
+        // Displays if the AI is currently attacking
+        else if (state == EnemyState.Attacking)
+        {
+            sb.AppendLine($"Is Currently Attacking: {isAttacking}");
+        }
+
+        debugText.text = sb.ToString();
+    }
+
+    // Vision cone that shows where Enemy is looking
+    private void UpdateVisionMesh()
+    {
+        if (visionMeshFilter == null || visionMesh == null) return;
+
+        // Automatically swap the material depending on whether the enemy is chasing the player
+        MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+        if (meshRenderer != null)
+        {
+            if (state == EnemyState.Following || state == EnemyState.Attacking) // Following / Attacking states
+            {
+                if (visionFollowingMaterial != null && meshRenderer.sharedMaterial != visionFollowingMaterial)
+                {
+                    meshRenderer.material = visionFollowingMaterial;
+                }
+            }
+            else // Patrolling state
+            {
+                if (visionMaterial != null && meshRenderer.sharedMaterial != visionMaterial)
+                {
+                    meshRenderer.material = visionMaterial;
+                }
+            }
+        }
+
+        if (!showVisionGizmos)
+        {
+            visionMesh.Clear();
+            return;
+        }
+
+        int vertexCount = arcSegments + 2;
+        Vector3[] vertices = new Vector3[vertexCount];
+        int[] triangles = new int[arcSegments * 3];
+
+        // Origin tracking in local space
+        vertices[0] = new Vector3(0, 0.05f, 0);
+
+        float startAngle = -viewAngle / 2f;
+        float endAngle = viewAngle / 2f;
+
+        for (int i = 0; i <= arcSegments; i++)
+        {
+            float t = (float)i / arcSegments;
+            float segmentAngle = Mathf.Lerp(startAngle, endAngle, t);
+
+            // Translate localized angles to trigonometry vectors
+            float rad = segmentAngle * Mathf.Deg2Rad;
+            float x = Mathf.Sin(rad);
+            float z = Mathf.Cos(rad);
+
+            // Calculate global direction vector to cast rays safely in world coordinates
+            Vector3 globalDir = transform.TransformDirection(new Vector3(x, 0, z));
+
+            // Set default localized target maximum range vector
+            float currentDistance = detectionRange;
+
+            // Perform World Raycast mapping check
+            // Set ray position origin offset vertically slightly off the floor (0.05f matching your visualizer height)
+            Vector3 rayOrigin = transform.position + Vector3.up * 0.05f;
+
+            if (Physics.Raycast(rayOrigin, globalDir, out RaycastHit hit, detectionRange, obstacleMask))
+            {
+                // If hit, clamp vertex positioning distance exactly to the physical obstacle collision border boundary point
+                currentDistance = hit.distance;
+            }
+
+            // Convert position safely back down into Local Vertices array space layout matching the original code framework structure
+            vertices[i + 1] = new Vector3(x * currentDistance, vertices[0].y, z * currentDistance);
+
+            if (i < arcSegments)
+            {
+                int triangleIndexOffset = i * 3;
+                triangles[triangleIndexOffset] = 0;
+                triangles[triangleIndexOffset + 1] = i + 1;
+                triangles[triangleIndexOffset + 2] = i + 2;
+            }
+        }
+
+        visionMesh.Clear();
+        visionMesh.vertices = vertices;
+        visionMesh.triangles = triangles;
+
+        visionMesh.RecalculateBounds();
+        visionMesh.RecalculateNormals();
     }
 }
