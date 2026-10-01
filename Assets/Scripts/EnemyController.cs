@@ -14,7 +14,9 @@ public class EnemyController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Transform player;
+
     [SerializeField] private Transform[] patrolPoints;
+
     [SerializeField] private TextMeshProUGUI debugText;
 
     [Header("In-Game Debug Settings")]
@@ -331,30 +333,32 @@ public class EnemyController : MonoBehaviour
             float t = (float)i / arcSegments;
             float segmentAngle = Mathf.Lerp(startAngle, endAngle, t);
 
-            // Translate localized angles to trigonometry vectors
+            // 1. Calculate the local angle vector
             float rad = segmentAngle * Mathf.Deg2Rad;
             float x = Mathf.Sin(rad);
             float z = Mathf.Cos(rad);
 
-            // Calculate global direction vector to cast rays safely in world coordinates
+            // 2. Convert to global direction for the raycast
             Vector3 globalDir = transform.TransformDirection(new Vector3(x, 0, z));
-
-            // Set default localized target maximum range vector
-            float currentDistance = detectionRange;
-
-            // Perform World Raycast mapping check
-            // Set ray position origin offset vertically slightly off the floor (0.05f matching your visualizer height)
             Vector3 rayOrigin = transform.position + Vector3.up * 0.05f;
 
+            // 3. Establish a default target point in World Space (assuming no wall hit)
+            Vector3 targetWorldPoint = rayOrigin + globalDir * detectionRange;
+
+            // 4. Perform the raycast
             if (Physics.Raycast(rayOrigin, globalDir, out RaycastHit hit, detectionRange, obstacleMask))
             {
-                // If hit, clamp vertex positioning distance exactly to the physical obstacle collision border boundary point
-                currentDistance = hit.distance;
+                // Hit detected! Pull the point back by a tiny fraction (0.02f) to prevent Z-fighting bleed
+                targetWorldPoint = hit.point - (globalDir * 0.02f);
             }
 
-            // Convert position safely back down into Local Vertices array space layout matching the original code framework structure
-            vertices[i + 1] = new Vector3(x * currentDistance, vertices[0].y, z * currentDistance);
+            // 5. Convert the world space hit point SAFELY back into local space for the vertex array
+            Vector3 localTargetPoint = transform.InverseTransformPoint(targetWorldPoint);
 
+            // Assign the converted coordinates to your vertex structure
+            vertices[i + 1] = new Vector3(localTargetPoint.x, vertices[0].y, localTargetPoint.z);
+
+            // 6. Define triangles
             if (i < arcSegments)
             {
                 int triangleIndexOffset = i * 3;
