@@ -39,6 +39,8 @@ public class EnemyController : MonoBehaviour
     [Range(0, 360)] public float viewAngle = 90f;
 
     [Header("Settings")]
+    [SerializeField] private float patrolSpeed = 3.5f;
+    [SerializeField] private float chaseSpeed = 6.0f;
     [SerializeField] private float patrolWaitTime = 2f;
     [SerializeField] private float stopAtDistance = 0.5f;
     [SerializeField] private float losePlayerTime = 3f;
@@ -60,6 +62,8 @@ public class EnemyController : MonoBehaviour
 
     private void Start()
     {
+        agent.speed = patrolSpeed;
+
         GoToNextPatrolPoint();
 
         visionMeshFilter = GetComponent<MeshFilter>();
@@ -89,6 +93,7 @@ public class EnemyController : MonoBehaviour
                 if (distanceToPlayer <= detectionRange && CanSeePlayer())
                 {
                     state = EnemyState.Following;
+                    agent.speed = chaseSpeed;
                 }
 
                 break;
@@ -108,6 +113,7 @@ public class EnemyController : MonoBehaviour
                     if (timeSinceLostPlayer >= losePlayerTime)
                     {
                         state = EnemyState.Patrolling;
+                        agent.speed = patrolSpeed;
                         GoToClosestPatrolPoint();
                     }
                 }
@@ -122,6 +128,7 @@ public class EnemyController : MonoBehaviour
                 if (!isAttacking && distanceToPlayer > attackRange)
                 {
                     state = EnemyState.Following;
+                    agent.speed = chaseSpeed;
                     agent.isStopped = false;
                 }
                 break;
@@ -238,8 +245,10 @@ public class EnemyController : MonoBehaviour
 
     private void UpdateAnimations()
     {
-        var isWalking = agent.velocity.sqrMagnitude > 0.01f;
-        animator.SetBool("isWalking", isWalking);
+        bool isMoving = agent.velocity.sqrMagnitude > 0.01f;
+
+        animator.SetBool("isWalking", isMoving && state == EnemyState.Patrolling);
+        animator.SetBool("isRunning", isMoving && state == EnemyState.Following);
     }
 
     private void UpdateDebugUI(float distanceToPlayer)
