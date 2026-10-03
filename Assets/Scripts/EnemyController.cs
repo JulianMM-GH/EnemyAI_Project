@@ -268,7 +268,7 @@ public class EnemyController : MonoBehaviour
             // Instantiates a clean, efficient text string worker
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
 
-        sb.AppendLine($"<b>[ENEMY DEBUG]</b>");
+        sb.AppendLine($"<b>[Patrol Enemy Debug]</b>");
         sb.AppendLine($"State: <color=yellow>{state}</color>");
         sb.AppendLine($"Distance to Player: {distanceToPlayer:F2}m");
         sb.AppendLine($"Can See Player: {(CanSeePlayer() ? "<color=green>YES</color>" : "<color=red>NO</color>")}");

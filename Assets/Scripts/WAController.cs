@@ -230,7 +230,7 @@ public class WAController : MonoBehaviour
         debugText.gameObject.SetActive(true);
         System.Text.StringBuilder sb = new System.Text.StringBuilder();
 
-        sb.AppendLine($"<b>[WEEPING ANGEL DEBUG]</b>");
+        sb.AppendLine($"<b>[Follower Enemy Debug]</b>");
         sb.AppendLine($"State: <color=yellow>{state}</color>");
         sb.AppendLine($"Distance to Player: {distanceToPlayer:F2}m");
 
