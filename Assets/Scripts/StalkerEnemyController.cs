@@ -27,20 +27,9 @@ public class StalkerEnemyController : MonoBehaviour
 
     [Header("In-Game Debug Settings")]
     [SerializeField] private bool showDebugText = true;
-    [SerializeField] private bool showVisionGizmos = true;
-
-    public int arcSegments = 30;
-
-    public LayerMask obstacleMask;
-
-    private MeshFilter visionMeshFilter;
-    private Mesh visionMesh;
-
-    public Material visionMaterial;
-    public Material visionFollowingMaterial;
 
     [Header("Enemy Vision")]
-    [SerializeField] private float detectionRange = 15f;
+    //[SerializeField] private float detectionRange = 15f;
     [Range(0, 360)] public float viewAngle = 90f;
 
     [Header("Attack Settings")]
@@ -80,12 +69,7 @@ public class StalkerEnemyController : MonoBehaviour
             playerCamera = Camera.main;
         }
 
-        visionMeshFilter = GetComponent<MeshFilter>();
-        visionMesh = new Mesh { name = "Vision Cone Mesh" };
-        visionMeshFilter.mesh = visionMesh;
-
         agent.speed = normalSpeed;
-        UpdateMaterial();
     }
 
     private void Update()
@@ -127,7 +111,6 @@ public class StalkerEnemyController : MonoBehaviour
 
         UpdateAnimations();
         UpdateDebugUI(distanceToPlayer);
-        UpdateVisionMesh();
     }
 
     private void FollowPlayerBehind()
@@ -162,7 +145,6 @@ public class StalkerEnemyController : MonoBehaviour
             agent.isStopped = false;
             agent.SetDestination(targetHidingSpot.position);
         }
-        UpdateMaterial();
     }
 
     private void ExecuteHidingLogic()
@@ -185,7 +167,6 @@ public class StalkerEnemyController : MonoBehaviour
             if (hideTimer >= hideTime)
             {
                 state = StalkerState.Following;
-                UpdateMaterial();
             }
         }
     }
@@ -274,31 +255,16 @@ public class StalkerEnemyController : MonoBehaviour
             if (state == StalkerState.Hiding)
             {
                 // Passing a negative value to a Blend Tree or Multiplier parameter keeps the motor state moving smoothly backward
-                animator.SetFloat("VerticalSpeed", -1f);
+                animator.SetFloat("Speed", -1f);
             }
             else
             {
-                animator.SetFloat("VerticalSpeed", 1f);
+                animator.SetFloat("Speed", 1f);
             }
         }
         else
         {
-            animator.SetFloat("VerticalSpeed", 0f);
-        }
-    }
-
-    private void UpdateMaterial()
-    {
-        MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
-        if (meshRenderer == null) return;
-
-        if (state == StalkerState.Following || state == StalkerState.Attacking)
-        {
-            if (visionFollowingMaterial != null) meshRenderer.material = visionFollowingMaterial;
-        }
-        else
-        {
-            if (visionMaterial != null) meshRenderer.material = visionMaterial;
+            animator.SetFloat("Speed", 0f);
         }
     }
 
@@ -321,59 +287,5 @@ public class StalkerEnemyController : MonoBehaviour
         }
 
         debugText.text = sb.ToString();
-    }
-
-    private void UpdateVisionMesh()
-    {
-        if (visionMeshFilter == null || visionMesh == null) return;
-
-        if (!showVisionGizmos)
-        {
-            visionMesh.Clear();
-            return;
-        }
-
-        int vertexCount = arcSegments + 2;
-        Vector3[] vertices = new Vector3[vertexCount];
-        int[] triangles = new int[arcSegments * 3];
-
-        vertices[0] = new Vector3(0, 0.05f, 0);
-        float startAngle = -viewAngle / 2f;
-        float endAngle = viewAngle / 2f;
-
-        for (int i = 0; i <= arcSegments; i++)
-        {
-            float t = (float)i / arcSegments;
-            float segmentAngle = Mathf.Lerp(startAngle, endAngle, t);
-
-            float rad = segmentAngle * Mathf.Deg2Rad;
-            float x = Mathf.Sin(rad);
-            float z = Mathf.Cos(rad);
-
-            Vector3 globalDir = transform.TransformDirection(new Vector3(x, 0, z));
-            float currentDistance = detectionRange;
-            Vector3 rayOrigin = transform.position + Vector3.up * 0.05f;
-
-            if (Physics.Raycast(rayOrigin, globalDir, out RaycastHit hit, detectionRange, obstacleMask))
-            {
-                currentDistance = hit.distance;
-            }
-
-            vertices[i + 1] = new Vector3(x * currentDistance, vertices[0].y, z * currentDistance);
-
-            if (i < arcSegments)
-            {
-                int triangleIndexOffset = i * 3;
-                triangles[triangleIndexOffset] = 0;
-                triangles[triangleIndexOffset + 1] = i + 1;
-                triangles[triangleIndexOffset + 2] = i + 2;
-            }
-        }
-
-        visionMesh.Clear();
-        visionMesh.vertices = vertices;
-        visionMesh.triangles = triangles;
-        visionMesh.RecalculateBounds();
-        visionMesh.RecalculateNormals();
     }
 }

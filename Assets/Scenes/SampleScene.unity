@@ -3497,6 +3497,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: mannequin 1
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 208e76895dcc87b4d9f1586ce0429ff0, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 208e76895dcc87b4d9f1586ce0429ff0, type: 3}
       propertyPath: m_Controller
       value: 
@@ -4173,7 +4177,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1445108440
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5464,7 +5468,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 35c87b0b684f19a43ad0d6fd91d87e5f, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
@@ -7003,8 +7007,8 @@ SceneRoots:
   - {fileID: 1616080766}
   - {fileID: 1821185361}
   - {fileID: 1113050122}
-  - {fileID: 997600532}
   - {fileID: 1445108443}
+  - {fileID: 997600532}
   - {fileID: 386601338}
   - {fileID: 1820808665}
   - {fileID: 791892262}
