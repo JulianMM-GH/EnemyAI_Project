@@ -42,9 +42,17 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private float patrolSpeed = 3.5f;
     [SerializeField] private float chaseSpeed = 6.0f;
     [SerializeField] private float patrolWaitTime = 2f;
-    [SerializeField] private float stopAtDistance = 0.5f;
     [SerializeField] private float losePlayerTime = 3f;
+
+    [Header("Attack Settings")]
     [SerializeField] private float attackRange = 1.2f;
+    [SerializeField] private float attackDamage = 35f;
+    [SerializeField] private float damageDelay = 0.4f;
+    [SerializeField] private float attackCooldown = 1.5f;
+    [SerializeField] private float stopAtDistance = 0.5f;
+
+    private float nextAttackTime = 0f;
+    private Coroutine activeDamageRoutine;
 
     private NavMeshAgent agent;
     private Animator animator;
@@ -100,8 +108,8 @@ public class EnemyController : MonoBehaviour
 
             case EnemyState.Following:
                 FollowPlayer();
-                
-                if (distanceToPlayer <= attackRange)
+
+                if (distanceToPlayer <= attackRange && Time.time >= nextAttackTime)
                 {
                     state = EnemyState.Attacking;
                     StartAttack();
@@ -124,11 +132,18 @@ public class EnemyController : MonoBehaviour
                 break;
 
             case EnemyState.Attacking:
-                Attack();
-                if (!isAttacking && distanceToPlayer > attackRange)
+                LookAtPlayer();
+
+                if (!isAttacking && distanceToPlayer > attackRange && Time.time >= nextAttackTime)
                 {
                     state = EnemyState.Following;
                     agent.speed = chaseSpeed;
+                    agent.isStopped = false;
+                }
+
+                else if (!isAttacking && Time.time >= nextAttackTime)
+                {
+                    state = EnemyState.Following;
                     agent.isStopped = false;
                 }
                 break;
@@ -145,23 +160,54 @@ public class EnemyController : MonoBehaviour
     {
         agent.SetDestination(player.position);
     }
-
-    private void StartAttack()
+    
+    private void LookAtPlayer()
     {
-        agent.isStopped = true;
-        isAttacking = true;
-        animator.SetTrigger("Attack");
-    }
-
-    private void Attack()
-    {
-        agent.isStopped = true;
         var direction = (player.position - transform.position).normalized;
         direction.y = 0f;
         if (direction != Vector3.zero)
         {
             transform.rotation = Quaternion.LookRotation(direction);
         }
+    }
+
+    private void StartAttack()
+    {
+        nextAttackTime = Time.time + attackCooldown;
+
+        if (activeDamageRoutine != null)
+        {
+            StopCoroutine(activeDamageRoutine);
+            activeDamageRoutine = null;
+        }
+
+        agent.isStopped = true;
+        agent.updateRotation = true;
+        isAttacking = true;
+        animator.SetTrigger("Attack");
+
+        Attack();
+    }
+
+    private void Attack()
+    {
+        LookAtPlayer();
+        activeDamageRoutine = StartCoroutine(DelayedDamageRoutine());
+    }
+
+    private System.Collections.IEnumerator DelayedDamageRoutine()
+    {
+        yield return new WaitForSeconds(damageDelay);
+
+        if (Vector3.Distance(transform.position, player.position) <= attackRange)
+        {
+            if (player.TryGetComponent<PlayerHealth>(out var playerHealth))
+            {
+                playerHealth.TakeDamage(attackDamage);
+            }
+        }
+
+        activeDamageRoutine = null;
     }
 
     // Used by animation event

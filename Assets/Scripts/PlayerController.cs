@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(PlayerHealth))]
 
 public class PlayerController : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class PlayerController : MonoBehaviour
 
     private Camera mainCamera;
     private CharacterController characterController;
+    private PlayerHealth playerHealth;
 
     private InputAction moveInput;
     private InputAction runInput;
@@ -31,6 +33,7 @@ public class PlayerController : MonoBehaviour
     {
         mainCamera = GetComponentInChildren<Camera>();
         characterController = GetComponent<CharacterController>();
+        playerHealth = GetComponent<PlayerHealth>();
 
         moveInput = InputSystem.actions.FindAction("Move");
         runInput = InputSystem.actions.FindAction("Sprint");
@@ -46,6 +49,8 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (playerHealth.IsDead || Time.timeScale == 0f) return;
+
         Vector2 moveVector = moveInput.ReadValue<Vector2>();
         Vector2 mouseDelta = new Vector2(Mouse.current.delta.x.ReadValue(), Mouse.current.delta.y.ReadValue());
 

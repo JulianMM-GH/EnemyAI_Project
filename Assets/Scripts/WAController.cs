@@ -23,11 +23,14 @@ public class WAController : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private float movementSpeed = 3.5f;
-    [SerializeField] private float attackRange = 1.2f;
     [SerializeField] private LayerMask obstacleMask;
 
+    [Header("Attack Settings")]
+    [SerializeField] private float attackDamage = 100f;
+    [SerializeField] private float attackRange = 1.2f;
+
     [Header("Weeping Angel Settings")]
-    [SerializeField] private float freezeDelay = 0.5f; // Half-second movement window before freezing
+    [SerializeField] private float freezeDelay = 0.5f;
 
     private NavMeshAgent agent;
     private Animator animator;
@@ -56,7 +59,7 @@ public class WAController : MonoBehaviour
         var distanceToPlayer = Vector3.Distance(transform.position, player.position);
         bool playerIsLooking = IsPlayerLookingAtMe();
 
-        // Weeping Angel freeze validation loop
+        // Freeze validation loop
         if (playerIsLooking)
         {
             if (state != WAState.Frozen)
@@ -89,7 +92,6 @@ public class WAController : MonoBehaviour
             case WAState.Following:
                 FollowPlayer();
 
-                // CRITICAL FIX: Only attack if the player is NOT looking and the freeze timer hasn't started ticking
                 if (distanceToPlayer <= attackRange && !playerIsLooking && freezeTimer == 0f)
                 {
                     state = WAState.Attacking;
@@ -98,7 +100,7 @@ public class WAController : MonoBehaviour
                 break;
 
             case WAState.Frozen:
-                // Locked perfectly in place. Absolutely no attacking allowed.
+                // Enemy is completely frozen, can't attack
                 break;
 
             case WAState.Attacking:
@@ -168,6 +170,14 @@ public class WAController : MonoBehaviour
         {
             transform.rotation = Quaternion.LookRotation(direction);
         }
+
+        if (Vector3.Distance(transform.position, player.position) <= attackRange)
+        {
+            if (player.TryGetComponent<PlayerHealth>(out var playerHealth))
+            {
+                playerHealth.TakeDamage(attackDamage);
+            }
+        }
     }
 
     private void OnAttackAnimationEnd()
@@ -179,16 +189,15 @@ public class WAController : MonoBehaviour
     {
         if (playerCamera == null) return false;
 
-        // 1. Calculate target center point (chest height)
+        // Calculate target center point (chest height)
         float heightOffset = 1f;
         if (agent != null) heightOffset = agent.height / 2f;
         Vector3 enemyCenterTarget = transform.position + Vector3.up * heightOffset;
 
-        // 2. Convert to viewport coordinates
+        // Convert to viewport coordinates
         Vector3 screenPoint = playerCamera.WorldToViewportPoint(enemyCenterTarget);
 
-        // 3. FIX: Add peripheral padding (e.g., -0.1 to 1.1 instead of 0 to 1)
-        // This catches them even if they are slightly off-screen or in your peripheral vision
+        // Peripheral vision padding
         float padding = 0.1f;
         bool inViewport = screenPoint.z > 0 &&
                           screenPoint.x >= (0f - padding) && screenPoint.x <= (1f + padding) &&
@@ -196,7 +205,7 @@ public class WAController : MonoBehaviour
 
         if (!inViewport) return false;
 
-        // 4. Line of sight test
+        // Line of sight test
         Vector3 rayOrigin = playerCamera.transform.position;
         Vector3 rayDirection = enemyCenterTarget - rayOrigin;
 

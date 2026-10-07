@@ -34,6 +34,7 @@ public class StalkerEnemyController : MonoBehaviour
 
     [Header("Attack Settings")]
     [SerializeField] private float attackRange = 1.2f;
+    [SerializeField] private float attackDamage = 35f;
     [SerializeField] private float stopAtDistance = 0.5f;
 
     [Header("Stalker Settings")]
@@ -227,11 +228,20 @@ public class StalkerEnemyController : MonoBehaviour
     private void Attack()
     {
         agent.isStopped = true;
+
         var direction = (player.position - transform.position).normalized;
         direction.y = 0f;
         if (direction != Vector3.zero)
         {
             transform.rotation = Quaternion.LookRotation(direction);
+        }
+
+        if (Vector3.Distance(transform.position, player.position) <= attackRange)
+        {
+            if (player.TryGetComponent<PlayerHealth>(out var playerHealth))
+            {
+                playerHealth.TakeDamage(attackDamage);
+            }
         }
     }
 

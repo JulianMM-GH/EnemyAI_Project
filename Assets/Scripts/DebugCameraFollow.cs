@@ -18,7 +18,6 @@ public class DebugCameraFollow : MonoBehaviour
             return;
         }
 
-        // Calculate and cache the initial distance vector from the target
         offset = transform.position - target.position;
     }
 
@@ -26,10 +25,8 @@ public class DebugCameraFollow : MonoBehaviour
     {
         if (target == null) return;
 
-        // Calculate the ideal resting position based on your cached angle/offset
         Vector3 targetPosition = target.position + offset;
 
-        // Smoothly slide into position
         transform.position = Vector3.Lerp(transform.position, targetPosition, smoothSpeed * Time.deltaTime);
     }
 }
