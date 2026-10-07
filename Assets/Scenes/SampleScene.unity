@@ -2872,8 +2872,7 @@ MonoBehaviour:
   player: {fileID: 1616080766}
   patrolPoints:
   - {fileID: 1969615916}
-  - {fileID: 573786594}
-  - {fileID: 1364016570}
+  - {fileID: 870685365}
   debugText: {fileID: 564033474}
   showDebugText: 0
   showVisionGizmos: 1
@@ -2886,7 +2885,7 @@ MonoBehaviour:
   detectionRange: 10
   viewAngle: 90
   patrolSpeed: 3.5
-  chaseSpeed: 6
+  chaseSpeed: 6.5
   patrolWaitTime: 0.05
   losePlayerTime: 3
   attackRange: 2.4
@@ -5798,6 +5797,7 @@ Transform:
   - {fileID: 573786594}
   - {fileID: 1364016570}
   - {fileID: 1969615916}
+  - {fileID: 870685365}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517
@@ -6015,6 +6015,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1511710876219987756, guid: 2a27c96018717c144a3864d881c4d2ae, type: 3}
   m_PrefabInstance: {fileID: 843402555}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &870685364
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 870685365}
+  m_Layer: 0
+  m_Name: PatrolPoint (3)
+  m_TagString: Untagged
+  m_Icon: {fileID: 7148428337604731935, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &870685365
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 870685364}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.86, y: 0, z: -30.16}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 791892262}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &876516302
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12661,7 +12692,6 @@ MonoBehaviour:
   patrolPoints:
   - {fileID: 573786594}
   - {fileID: 1364016570}
-  - {fileID: 1969615916}
   debugText: {fileID: 564033474}
   showDebugText: 0
   showVisionGizmos: 1
@@ -12674,7 +12704,7 @@ MonoBehaviour:
   detectionRange: 10
   viewAngle: 90
   patrolSpeed: 3.5
-  chaseSpeed: 6
+  chaseSpeed: 6.5
   patrolWaitTime: 0.05
   losePlayerTime: 3
   attackRange: 2.4
